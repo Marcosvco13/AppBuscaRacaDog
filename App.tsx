@@ -109,7 +109,6 @@ export default function ApiRacaDog() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    //justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
     backgroundColor: '#F8F8F8',
