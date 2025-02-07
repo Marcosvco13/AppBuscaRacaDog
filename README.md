@@ -1,7 +1,6 @@
 # Dog Breed Finder
 
-Este projeto permite que os usuários pesquisem por raças de cachorros e visualizem informações sobre elas, incluindo a imagem correspondente. 
-O objetivo principal é fornecer uma maneira fácil de encontrar raças de cachorros e suas fotos, usando um dropdown para seleção da raça.
+Este projeto permite que os usuários pesquisem por raças de cachorros e visualizem a foto da respectiva raça do cachorro. O objetivo principal é fornecer uma maneira fácil de encontrar raças de cachorros e suas fotos, usando um dropdown para seleção da raça.
 
 ## Funcionalidades
 
