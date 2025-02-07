@@ -1,8 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback  } from 'react';
 import { View, Text, Image, TouchableOpacity, ActivityIndicator, StyleSheet } from 'react-native';
-import { Dropdown } from 'react-native-element-dropdown';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useFonts, Poppins_700Bold } from '@expo-google-fonts/poppins';
+import DropdownRaca from './components/DropdownRaca';
 
 export default function ApiRacaDog() {
   const [breeds, setRacas] = useState([]); // Armazenamento das raças
@@ -10,6 +8,7 @@ export default function ApiRacaDog() {
   const [value, setValue] = useState<string | null>(null); // Estado para o item selecionado
   const [imageUrl, setImageUrl] = useState<string | null>(null); // URL da imagem
   const [loadingImage, setLoadingImage] = useState<boolean>(false); // Estado para o carregamento da imagem
+  const [errorMessage, setErrorMessage] = useState<string | null>(null); //Estado para carregamento da mensagem de erro
 
   useEffect(() => {
     // Função para buscar as raças da API
@@ -35,24 +34,44 @@ export default function ApiRacaDog() {
     buscaRacas();
   }, []);
 
-  const BuscaIamgem = async () => {
-    if (!value) return;
-    setLoadingImage(true); // Inicia o carregamento da imagem
+  //Função que memoriza os dados para evitar que o dropdown fique renderizando
+  const handleSetValue = useCallback((newValue: string | null) => {
+    setValue(newValue);
+  }, []);
 
+  //Função para buscar a imagem do cachorro
+  const BuscaIamgem = async () => {
+    
+    //Verificação se o value é null
+    if (!value) {
+      setErrorMessage("Por favor, selecione uma raça antes de buscar a imagem.");
+      return;
+    }
+  
+    //Limpeza das constantes caso passe na verificação
+    setErrorMessage(null);
+    setLoadingImage(true);
+    setImageUrl(null);
+
+    //Bloco try catch para tentar se conectar com a api e retornar a imagem desejada
     try {
       const response = await fetch(`https://dog.ceo/api/breed/${value}/images/random`);
       const result = await response.json();
-      setImageUrl(result.message); // Armazena a URL da imagem
+  
+      if (!result.message) {
+        throw new Error("Nenhuma imagem encontrada.");
+      }
+  
+      setImageUrl(result.message);
     } catch (error) {
       console.error("Erro ao buscar imagem:", error);
+      setErrorMessage("Erro ao buscar a imagem. Tente novamente.");
     } finally {
-      setTimeout(() => setLoadingImage(false), 3000); // Fim do carregamento após 3s
+      setTimeout(() => setLoadingImage(false), 3000);
     }
   };
 
   return (
-    
-      
     <View style={styles.container}>
       {loading ? (
         <ActivityIndicator size="large" color="#0000ff" />
@@ -60,35 +79,18 @@ export default function ApiRacaDog() {
         <>
           <Text style={styles.titulo}>Buscador de Doguinho</Text>
 
-          <Dropdown
-            style={styles.dropdown}
-            placeholderStyle={styles.placeholderStyle}
-            selectedTextStyle={styles.selectedTextStyle}
-            inputSearchStyle={styles.inputSearchStyle}
-            iconStyle={styles.iconStyle}
-            data={breeds}
-            search
-            maxHeight={300}
-            labelField="label"
-            valueField="value"
-            placeholder="Selecione uma raça"
-            searchPlaceholder="Buscar..."
-            value={value}
-            onChange={(item: { value: string }) => setValue(item.value)}
-            renderLeftIcon={() => (
-              <MaterialCommunityIcons
-                style={styles.icon}
-                color="black"
-                name="dog"
-                size={24}
-              />
-            )}
-          />
+          {/*Aqui eu trago o componente de dropdown que criei*/}
+          <DropdownRaca data={breeds} value={value} setValue={handleSetValue} />
 
+          {/* Exibe a mensagem de erro caso o usuário não tenha selecionado uma raça */}
+          {errorMessage && <Text style={styles.errorText}>{errorMessage}</Text>}
+
+          {/*Botão para disparar a busca da imagem do cachorro */}
           <TouchableOpacity style={styles.button} onPress={BuscaIamgem}>
             <Text style={styles.buttonText}>Buscar Imagem</Text>
           </TouchableOpacity>
 
+          {/*Loading e exebição da imagem que retornou da api*/}
           <View style={styles.imagemContainer}>
             {loadingImage ? (
               <ActivityIndicator size="large" color="#0000ff" style={styles.loading} />
@@ -107,61 +109,65 @@ export default function ApiRacaDog() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    marginTop: 150, 
+    //justifyContent: 'center',
     alignItems: 'center',
-    padding: 50,
+    padding: 20,
+    backgroundColor: '#F8F8F8',
   },
+  
   titulo: {
-    marginBottom: 40,
-    fontSize: 25,
+    fontSize: 28,
     fontWeight: 'bold',
     fontFamily: 'sans-serif',
-  },
-  dropdown: {
-    width: '100%',
-    height: 50,
-    borderColor: 'gray',
-    borderWidth: 1,
-    borderRadius: 8,
     marginBottom: 20,
+    marginTop:50,
+    color: '#333',
   },
-  placeholderStyle: {
-    fontSize: 16,
-  },
-  selectedTextStyle: {
-    fontSize: 16,
-  },
-  icon: { 
-    marginRight: 10,
-    marginLeft: 10,
-    color: 'black',
-  },
-  inputSearchStyle: {
-    fontSize: 16,
-  },
-  iconStyle: {
-    marginRight: 10,
-  },
+  
   button: {
     backgroundColor: '#007BFF',
-    padding: 10,
-    borderRadius: 5,
-    marginBottom: 20,
+    paddingVertical: 12,
+    paddingHorizontal: 25,
+    borderRadius: 8,
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
   },
+  
   buttonText: {
     color: '#fff',
     fontSize: 18,
   },
+  
   imagemContainer: {
     justifyContent: 'center',
     alignItems: 'center',
+    marginTop: 100,
   },
+  
   loading: {
     marginTop: 20,
   },
+  
   image: {
-    width: 250,
-    height: 250,
-    borderRadius: 10,
+    width: 300,
+    height: 300,
+    borderRadius: 15,
+    borderWidth: 2,
+    borderColor: '#ddd',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
   },
+  
+  errorText: {
+    color: 'red',
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginTop: 10,
+    textAlign: 'center',
+  }
 });
